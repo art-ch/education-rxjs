@@ -1,4 +1,11 @@
-import { Observable, Subject, fromEvent, interval, of } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  BehaviorSubject,
+  fromEvent,
+  interval,
+  of,
+} from 'rxjs';
 import {
   throttleTime,
   map,
@@ -7,6 +14,9 @@ import {
   distinctUntilChanged,
   reduce,
   scan,
+  pluck,
+  mergeMap,
+  switchMap,
 } from 'rxjs/operators';
 
 // Utils
@@ -87,24 +97,72 @@ const subscription5 = observable5.subscribe({
 setTimeout(() => subscription5.unsubscribe(), 5000);
 
 // debounceTime() / distinctUnitChanged()
-const input = document.querySelector('.input-7');
-const observable6 = fromEvent(input, 'input').pipe(
+const input6 = document.querySelector('.input-6');
+const observable6 = fromEvent(input6, 'input').pipe(
   map((event) => event.target.value),
   debounceTime(2000),
   distinctUntilChanged()
 );
 
-const subscription6 = instantiateSubscriber(observable6);
+instantiateSubscriber(observable6);
 
 // reduce() / scan()
 const observable7_1 = of(1, 2, 3, 4, 5).pipe(
   reduce((total, currentValue) => total + currentValue, 0)
 );
 const observable7_2 = of(1, 2, 3, 4, 5).pipe(
-  scan((total, currentValue) => total + currentValue, 0)
+  scan((total, currentValue) => total + currentValue, 0),
+  map((value, id) => `Iteration ${id}: ${value}`)
 );
 
-const subscription7_1 = instantiateSubscriber(observable7_1);
-const subscription7_2 = observable7_2.subscribe({
-  next: (value) => console.log(value),
+instantiateSubscriber(observable7_1);
+instantiateSubscriber(observable7_2);
+
+// pluck()
+const input8 = document.querySelector('.input-8');
+const observable8 = fromEvent(input8, 'input').pipe(
+  pluck('target', 'value'),
+  debounceTime(2000),
+  distinctUntilChanged()
+);
+
+instantiateSubscriber(observable8);
+
+// mergeMap()
+const input9_1 = document.querySelector('.input-9_1');
+const input9_2 = document.querySelector('.input-9_2');
+const span9 = document.querySelector('.span-9');
+
+let observable9_1 = fromEvent(input9_1, 'input');
+let observable9_2 = fromEvent(input9_2, 'input');
+
+observable9_1
+  .pipe(
+    mergeMap((event9_1) =>
+      observable9_2.pipe(
+        map((event9_2) => `${event9_1.target.value} ${event9_2.target.value}`)
+      )
+    )
+  )
+  .subscribe((combinedValue) => (span9.textContent = combinedValue));
+
+// switchMap()
+const button10 = document.querySelector('.button-10');
+
+const observable10_1 = fromEvent(button10, 'click');
+const observable10_2 = interval(1000);
+
+observable10_1.pipe(switchMap((_) => observable10_2));
+const subscription10 = observable10_1.subscribe((value) => console.log(value));
+setTimeout(subscription10.unsubscribe(), 5000);
+
+// BehaviorSubject()
+const clickEmitted = new BehaviorSubject('Not Clicked!');
+
+const button11 = document.querySelector('.button-11');
+const p11 = document.querySelector('.p-11');
+
+button11.addEventListener('click', () => {
+  clickEmitted.next('Clicked!');
 });
+clickEmitted.subscribe((value) => (p11.textContent = value));
